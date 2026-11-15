@@ -1,6 +1,41 @@
 # AudioPick <img src="./resources/Icons/APV3_Icon_2d_2c_192.png" align="right" width="128" height="128">
 A **Chrome Manifest V3 Extension** to pick a preferred audio output device for **HTML5** `<audio/>` and `<video/>` elements
 
+## ShadyDOM compatibility fix
+
+This version fixes AudioPick blocking pages that use ShadyDOM, including
+authentik login flows with **Compatibility mode** enabled. The extension falls
+back to observing the real host element when a native `MutationObserver` rejects
+an emulated shadow root. Audio routing continues to work on those pages.
+
+To install this version in Chrome or a Chromium-based browser:
+
+1. Download and extract the source or the supplied ZIP archive.
+2. Disable the Chrome Web Store version of AudioPick so only one copy is active.
+3. Open `chrome://extensions` and enable **Developer mode**.
+4. Click **Load unpacked** and select the extracted `extension` directory,
+   which contains `manifest.json`.
+5. Reload existing tabs. This version appears as **0.3.11.1 (ShadyDOM fix)**.
+
+The extension runs directly from that directory; no build step is required.
+Its browser permissions are unchanged. Local unpacked installations must be
+updated manually.
+
+### Regression tests
+
+Install Node.js 20 or newer, then run:
+
+```sh
+npm ci
+npx playwright install chromium
+npm test
+```
+
+The tests use Chromium and the actual `@webcomponents/shadydom` polyfill. They
+check login field rendering, both script load orders, media added dynamically,
+audio device change events, and native open and closed shadow roots. Device
+selection is recorded with a test stub; no physical audio device is required.
+
 ## How it works
 The extension finds **HTML5** `<audio/>` and `<video/>` elements within the document tree and manipulates the `sinkId` in order
 to switch to the preferred audio output device. Since version `0.3.8` it also finds `Audio`, `Video` and `AudioContext` objects that have not been inserted into the document tree, e. g. **Spotify** and **SoundCloud** should now work with the extension, too.

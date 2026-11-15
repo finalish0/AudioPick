@@ -1,5 +1,14 @@
 # CHANGELOG
 
+### AudioPick-0.3.11.1 (ShadyDOM fix)
+- Fix pages such as authentik in compatibility mode failing to render when
+  AudioPick is enabled. Native `MutationObserver` instances cannot observe
+  ShadyDOM's emulated shadow roots; observe their host elements instead.
+- Traverse `childNodes` directly instead of calling the native `hasChildNodes`
+  method on emulated shadow roots, which throws `Illegal invocation`.
+- Add Chromium regression tests using the actual ShadyDOM polyfill, including
+  both script load orders, dynamic media, device changes, and native shadow roots.
+
 ### AudioPick-0.3.10
 - Improve debug logging, e. g. inject `enableDebug` into content scripts running in world **MAIN**.
 - Fully support **Deezer** and **SoundCloud**.

@@ -30,6 +30,20 @@ function APV3_UN1QU3_debugMessage(...args) {
 	}
 }
 
+// ShadyDOM roots expose the ShadowRoot API but are not native DOM nodes.
+// A native MutationObserver rejects them even when they inherit from Node.
+// Their rendered children live in the host's DOM, so observe the host instead.
+function APV3_UN1QU3_observeShadowRoot(root) {
+	try {
+		APV3_UN1QU3_observer.observe(root, {childList: true, subtree: true});
+	} catch (error) {
+		if (!(error instanceof TypeError) || !root.host) {
+			throw error;
+		}
+		APV3_UN1QU3_observer.observe(root.host, {childList: true, subtree: true});
+	}
+}
+
 async function APV3_UN1QU3_maybeSetSinkId(targetElement, trigger, sinkId) {
 	if (sinkId === "default") {
 		sinkId = "";
@@ -86,15 +100,15 @@ async function APV3_UN1QU3_addListenerAndSetSinkId(targetElement, method) {
 async function APV3_UN1QU3_recursiveSetSinkId(node) {
 	var queue = [];
 	// If there are children queue each one up to pass back to this function.
-	if (node.hasChildNodes()) {
-		node.childNodes.forEach(function (child) {
-			queue.push(APV3_UN1QU3_recursiveSetSinkId(child));
-		});
-	}
+	// Read childNodes directly: ShadyDOM roots inherit the native hasChildNodes
+	// method without being native nodes, so calling it throws Illegal invocation.
+	node.childNodes.forEach(function (child) {
+		queue.push(APV3_UN1QU3_recursiveSetSinkId(child));
+	});
 	// If there are shadowRoots make sure they're being observed.
 	// Then queue each child to send back to this function.
 	if (node.shadowRoot) {
-		APV3_UN1QU3_observer.observe(node.shadowRoot, {childList: true,subtree: true});
+		APV3_UN1QU3_observeShadowRoot(node.shadowRoot);
 		node.shadowRoot.childNodes.forEach(function (child) {
 			queue.push(APV3_UN1QU3_recursiveSetSinkId(child));
 		});
@@ -188,7 +202,7 @@ function APV3_UN1QU3_hookElement_attachShadow() {
 		// Create the shadowRoot with the original function.
 		var s = this.attachShadow_noHook.apply(this, arguments);
 		// Attach our observer to watch for any changes.
-		APV3_UN1QU3_observer.observe(s, {childList: true, subtree: true});
+		APV3_UN1QU3_observeShadowRoot(s);
 		// Recursively set sinkIDs on any existing children.
 		APV3_UN1QU3_recursiveSetSinkId(s);
 		// Return the requested shadowRoot.

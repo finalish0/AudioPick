@@ -4,3 +4,4 @@
 # temporary folders
 extension.*
 resources.*
+node_modules/
